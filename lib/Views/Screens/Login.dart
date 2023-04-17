@@ -1,4 +1,4 @@
-// ignore_for_file: unused_element, prefer_const_constructors, sort_child_properties_last
+// ignore_for_file: unused_element, prefer_const_constructors, sort_child_properties_last, unrelated_type_equality_checks
 
 import 'dart:convert';
 import 'dart:ffi';
@@ -41,35 +41,35 @@ class LoginPage extends StatelessWidget {
   Future<void> handleClick() async {
     if (_formKey.currentState!.validate()) {
       //lets handle  our post request here
-      var url = Uri.parse('http://127.0.0.1:8000/api/v1/auth/signin');
-      var response = await http.post(url, body: {
-        'username': userController.text,
-        'password': passwordController.text
-      });
-      if (response.statusCode == 200) {
+      var url = Uri.parse('http://192.168.8.115:8000/api/v1/auth/signin');
+      try {
+        var response = await http.post(url, body: {
+          'username': userController.text.trim(),
+          'password': passwordController.text.trim()
+        });
+
         var responsebody = jsonDecode(response.body);
-        if (responsebody["status"] == true) {
+
+        if (responsebody["ok"] == true) {
           Fluttertoast.showToast(
-              msg: "Success",
-              backgroundColor: Colors.red,
+              msg: responsebody['message'],
+              backgroundColor: Colors.green,
               textColor: Colors.white,
               fontSize: 16.0);
         } else {
           Fluttertoast.showToast(
-              msg: "Invalid Username or Password",
+              msg: responsebody['message'],
               backgroundColor: Colors.red,
               textColor: Colors.white,
               fontSize: 16.0);
         }
-      } else {
+      } catch (e) {
         Fluttertoast.showToast(
-            msg: "Failed",
+            msg: "Network error",
             backgroundColor: Colors.red,
             textColor: Colors.white,
             fontSize: 16.0);
       }
-    } else {
-      print("Failed");
     }
   }
 
