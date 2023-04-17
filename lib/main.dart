@@ -15,7 +15,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Center(child: LoginPage()),
+      home: Scaffold(
+        body: SafeArea(
+          child: Container(
+              width: double.infinity,
+              height: double.infinity,
+              color: Color.fromARGB(255, 208, 0, 0),
+              child: Center(child: LoginPage())),
+        ),
+      ),
     );
   }
 }
