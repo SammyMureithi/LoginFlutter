@@ -1,4 +1,4 @@
-// ignore_for_file: unused_element, prefer_const_constructors, sort_child_properties_last, unrelated_type_equality_checks, prefer_const_literals_to_create_immutables, avoid_unnecessary_containers, use_build_context_synchronously
+// ignore_for_file: unused_element, prefer_const_constructors, sort_child_properties_last, unrelated_type_equality_checks, prefer_const_literals_to_create_immutables, avoid_unnecessary_containers, use_build_context_synchronously, avoid_print
 
 import 'dart:convert';
 import 'dart:ffi';
@@ -6,9 +6,14 @@ import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+import 'package:login/Utils/SharedPreference.dart';
 import 'package:login/Views/Common/CustomPopProgress.dart';
+import 'package:login/Views/Screens/HomeScreen.dart';
 import '../Common/CustomButton.dart';
 import '../Common/TextInputField.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../Common/Toast.dart';
 
 class LoginPage extends StatelessWidget {
   LoginPage({super.key});
@@ -18,6 +23,7 @@ class LoginPage extends StatelessWidget {
   final userController = TextEditingController();
   final _myFieldFocusNode = FocusNode();
   bool _isLoading = false;
+  late SharedPreferences preferences;
 
   Future<void> handleClick(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
@@ -40,25 +46,52 @@ class LoginPage extends StatelessWidget {
         _formKey.currentState!.reset();
         var responsebody = jsonDecode(response.body);
         if (responsebody["ok"] == true) {
-          Fluttertoast.showToast(
-              msg: responsebody['message'],
-              backgroundColor: Colors.green,
-              textColor: Colors.white,
-              fontSize: 16.0);
+          // print(responsebody);
+          if (responsebody['user']['role'] == null) {
+            return CustomToast(
+                    message: "Role not Assigned", bgColor: Colors.red)
+                .showToast();
+          } else {
+            try {
+              preferences = await SharedPreferences.getInstance();
+              await preferences.setInt("id", responsebody['user']['id']);
+              await preferences.setString("name", responsebody['user']['name']);
+              await preferences.setString(
+                  "username", responsebody['user']['username']);
+              await preferences.setString(
+                  "phone", responsebody['user']['phone']);
+              await preferences.setString(
+                  "email", responsebody['user']['email']);
+              await preferences.setString(
+                  "role", responsebody['user']['role']['name']);
+              await preferences.setString(
+                  "accessToken", responsebody['accessToken']);
+              // print("Saved Successfully");
+              // var userId = await preferences.getString("role");
+              // print(userId);
+            } catch (e) {
+              // print("Not Saved");
+              print(e);
+            }
+          }
+
+          CustomToast(message: responsebody['message'], bgColor: Colors.green)
+              .showToast();
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HomeScreen(),
+              ));
         } else {
-          Fluttertoast.showToast(
-              msg: responsebody['message'],
-              backgroundColor: Colors.red,
-              textColor: Colors.white,
-              fontSize: 16.0);
+          return CustomToast(
+                  message: responsebody['message'], bgColor: Colors.red)
+              .showToast();
         }
       } catch (e) {
         Navigator.pop(context);
-        Fluttertoast.showToast(
-            msg: "Network error",
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            fontSize: 16.0);
+
+        return CustomToast(message: "Network Error", bgColor: Colors.red)
+            .showToast();
       }
     }
   }
